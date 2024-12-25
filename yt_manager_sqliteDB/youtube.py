@@ -17,11 +17,24 @@ cursor.execute('''
 def list_all_youtube_videos():
     cursor.execute("SELECT * FROM videos")
     print("\n")
-    print("*" * 70)
-    for row in cursor.fetchall():
-        print(row)
-    print("\n")
-    print("*" * 70)
+    # print("*" * 70)
+    # for row in cursor.fetchall():
+    #     print(row)
+    # print("\n")
+    # print("*" * 70)
+    
+    rows = cursor.fetchall()
+                
+        # Print header
+    print("+----+---------------------------+---------------------+")
+    print("| id | name                      | time                |")
+    print("+----+---------------------------+---------------------+")
+    
+    # Print each row with wider columns
+    for row in rows:
+        print(f"| {row[0]:<2} | {row[1]:<25} | {row[2]:<19} |")
+    
+    print("+----+---------------------------+---------------------+")
 
 def add_youtube_video(name, time):
     cursor.execute("INSERT INTO videos (name, time) VALUES (?, ?)", (name, time))
