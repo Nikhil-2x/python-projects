@@ -59,10 +59,11 @@ def list_all_youtube_videos():
                 # print("\n")
                 # print("*" * 70)
                 
-                # 2nd way of printing the records by designing lol
-                rows = cursor.fetchall()
                 
-                 # Print header
+                rows = cursor.fetchall()
+
+                # 2nd way of printing the records by designing lol
+                # Print header
                 print("+----+---------------------------+---------------------+")
                 print("| id | name                      | time                |")
                 print("+----+---------------------------+---------------------+")
