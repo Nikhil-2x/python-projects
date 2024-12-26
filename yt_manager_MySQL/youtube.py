@@ -52,6 +52,7 @@ def list_all_youtube_videos():
         try:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM videos")
+                rows = cursor.fetchall()
                 # print("\n")
                 # print("*" * 70)
                 # for row in cursor.fetchall():
@@ -59,10 +60,9 @@ def list_all_youtube_videos():
                 # print("\n")
                 # print("*" * 70)
                 
+
                 # 2nd way of printing the records by designing lol
-                rows = cursor.fetchall()
-                
-                 # Print header
+                # Print header
                 print("+----+---------------------------+---------------------+")
                 print("| id | name                      | time                |")
                 print("+----+---------------------------+---------------------+")

@@ -16,6 +16,7 @@ cursor.execute('''
 
 def list_all_youtube_videos():
     cursor.execute("SELECT * FROM videos")
+    rows = cursor.fetchall()
     print("\n")
     # print("*" * 70)
     # for row in cursor.fetchall():
@@ -23,10 +24,8 @@ def list_all_youtube_videos():
     # print("\n")
     # print("*" * 70)
     
-    #2nd way of printing the records by designing lol
-    rows = cursor.fetchall()
-                
-        # Print header
+    #2nd way of printing the records by designing lol            
+    # Print header
     print("+----+---------------------------+---------------------+")
     print("| id | name                      | time                |")
     print("+----+---------------------------+---------------------+")
