@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS users (
     is_logged_in BOOLEAN DEFAULT FALSE,
     is_locked BOOLEAN DEFAULT FALSE,
     failed_attempts INT DEFAULT 0,
-    lock_until TIMESTAMP NULL DEFAULT NULL
+    lock_until TIMESTAMP NULL DEFAULT NULL,
+    last_active DATETIME DEFAULT NULL
 )
 ''')
 
@@ -92,8 +93,10 @@ def login_user():
         if bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
             if is_logged_in:
                 print("\n✅ User is already logged in.")
+                cursor.execute("UPDATE users SET last_active = %s WHERE id = %s", (datetime.now(), user_id))
+                connection.commit()
             else:
-                cursor.execute("UPDATE users SET is_logged_in = TRUE, failed_attempts = 0, lock_until = NULL WHERE id = %s", (user_id,))
+                cursor.execute("UPDATE users SET is_logged_in = TRUE, failed_attempts = 0, lock_until = NULL, last_active = %s WHERE id = %s", (datetime.now(), user_id,))
                 connection.commit()
                 print("\n✅ Login successful!")
                 cursor.execute("INSERT INTO login_history (username, status) VALUES (%s, 'Successful')", (username,))
@@ -130,7 +133,7 @@ def logout_user():
     if result:
         user_id, is_logged_in = result
         if is_logged_in:
-            cursor.execute("UPDATE users SET is_logged_in = FALSE WHERE id = %s", (user_id,))
+            cursor.execute("UPDATE users SET is_logged_in = FALSE, last_active =%s WHERE id = %s", (datetime.now(), user_id,))
             connection.commit()
             print("\n✅ Logout successful!")
         else:
@@ -184,6 +187,90 @@ def view_login_history():
             print(f"{log[0]:<5}{log[1]:<20}{log[2]:<30}{log[3]:<25}")
     else:
         print("\nNo login history available.")
+        
+
+def change_password():
+    print_header("Change Password")
+    username = input("Enter your username: ")
+    old_password = input("Enter your current password: ")
+
+    cursor.execute("SELECT id, password_hash FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    if result:
+        user_id, password_hash = result
+
+        if bcrypt.checkpw(old_password.encode('utf-8'), password_hash.encode('utf-8')):
+            new_password = input("Enter your new password: ")
+            confirm_password = input("Confirm your new password: ")
+
+            if new_password == confirm_password:
+                new_password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (new_password_hash, user_id))
+                connection.commit()
+                print("\n✅ Password changed successfully!")
+            else:
+                print("\n❌ Passwords do not match. Try again.")
+        else:
+            print("\n❌ Incorrect current password.")
+    else:
+        print("\n❌ Username not found.")
+
+def reset_failed_attempts():
+    print_header("Reset Failed Login Attempts")
+    username = input("Enter the username: ")
+
+    cursor.execute("SELECT id, failed_attempts FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    if result:
+        user_id, failed_attempts = result
+
+        if confirm_action(f"Reset failed login attempts for {username}?"):
+            cursor.execute("UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = %s", (user_id,))
+            connection.commit()
+            print("\n✅ Failed login attempts reset successfully!")
+        else:
+            print("\n❌ Action cancelled.")
+    else:
+        print("\n❌ Username not found.")
+
+def check_account_status():
+    print_header("Check Account Lock Status")
+    username = input("Enter your username: ")
+
+    cursor.execute("SELECT is_locked, lock_until FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    if result:
+        is_locked, lock_until = result
+
+        if is_locked:
+            print("\n❌ Your account is locked.")
+            if lock_until:
+                print(f"It will be unlocked on {lock_until.strftime('%Y-%m-%d %H:%M:%S')}.")
+        else:
+            print("\n✅ Your account is unlocked.")
+    else:
+        print("\n❌ Username not found.")
+
+def auto_logout_inactive_users():
+    print_header("Auto Logout Inactive Users")
+    inactivity_duration = int(input("Enter inactivity duration in minutes: "))
+    cutoff_time = datetime.now() - timedelta(minutes=inactivity_duration)
+
+    cursor.execute("SELECT id, username FROM users WHERE is_logged_in = TRUE AND last_active < %s", (cutoff_time,))
+    inactive_users = cursor.fetchall()
+
+    if inactive_users:
+        for user_id, username in inactive_users:
+            cursor.execute("UPDATE users SET is_logged_in = FALSE WHERE id = %s", (user_id,))
+        connection.commit()
+        print("\n✅ All inactive users have been logged out.")
+    else:
+        print("\n✅ No inactive users found.")
+        
+
 
 # Main menu
 def main():
@@ -195,7 +282,11 @@ def main():
         print("4. View All Users (Admin)")
         print("5. Lock/Unlock User (Admin)")
         print("6. View Login History (Admin)")
-        print("7. Exit")
+        print("7. Change Password")
+        print("8. Reset Failed Login Attempts (Admin)")
+        print("9. Check Account Lock Status")
+        print("10. Auto Logout Inactive Users (Admin)")
+        print("11. Exit")
 
         choice = input("\nEnter your choice: ")
 
@@ -212,6 +303,14 @@ def main():
         elif choice == "6":
             view_login_history()
         elif choice == "7":
+            change_password()
+        elif choice == "8":
+            reset_failed_attempts()
+        elif choice == "9":
+            check_account_status()
+        elif choice == "10":
+            auto_logout_inactive_users()
+        elif choice == "11":
             print("\n✅ Exiting...")
             break
         else:
