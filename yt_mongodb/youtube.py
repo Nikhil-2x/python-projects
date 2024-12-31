@@ -16,6 +16,8 @@ print(client)
 db = client["ytmanager"]
 video_collection = db["videos"]
 
+
+
 # Define CRUD operations
 def add_video(name, time):
     video_collection.insert_one({"name": name, "time": time})
