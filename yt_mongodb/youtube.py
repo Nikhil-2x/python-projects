@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
+from tabulate import tabulate
 import os
 
 # Load environment variables from .env file
@@ -10,8 +11,7 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 
 # Connect to MongoDB using the URI
-client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True)
-#  tlsAllowInvalidCertificates=True - Not a good way to handle ssl
+client = MongoClient(MONGO_URI)
 
 # print(client)
 db = client["ytmanager"]
@@ -22,8 +22,16 @@ def add_video(name, time):
     video_collection.insert_one({"name": name, "time": time})
 
 def list_videos():
-    for video in video_collection.find():
-        print(f"ID: {video['_id']}, Name: {video['name']} and Time: {video['time']}")
+    # for video in video_collection.find():
+    #     print(f"ID: {video['_id']}, Name: {video['name']} and Time: {video['time']}")
+    
+    # printing data in tabular format
+    videos = video_collection.find()
+    table = [["ID", "Name", "Time"]]
+    for video in videos:
+        table.append([str(video["_id"]), video["name"], video["time"]])
+    print(tabulate(table, headers="firstrow", tablefmt="grid"))
+
 
 def update_video(video_id, new_name, new_time):
     video_collection.update_one({'_id': ObjectId(video_id)}, {"$set": {"name": new_name, "time": new_time}})
