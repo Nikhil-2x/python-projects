@@ -11,14 +11,13 @@ MONGO_URI = os.getenv("MONGO_URI")
 
 # Connect to MongoDB using the URI
 client = MongoClient(MONGO_URI, tlsAllowInvalidCertificates=True)
+#  tlsAllowInvalidCertificates=True - Not a good way to handle ssl
 
-print(client)
+# print(client)
 db = client["ytmanager"]
 video_collection = db["videos"]
+# print(video_collection)
 
-
-
-# Define CRUD operations
 def add_video(name, time):
     video_collection.insert_one({"name": name, "time": time})
 
@@ -32,14 +31,14 @@ def update_video(video_id, new_name, new_time):
 def delete_video(video_id):
     video_collection.delete_one({"_id": ObjectId(video_id)})
 
-# Main application loop
+
 def main():
     while True:
-        print("\nYoutube Manager App")
+        print("\n Youtube manager App")
         print("1. List all videos")
-        print("2. Add a new video")
-        print("3. Update a video")
-        print("4. Delete a video")
+        print("2. Add a new videos")
+        print("3. Update a videos")
+        print("4. Delete a videos")
         print("5. Exit the app")
         choice = input("Enter your choice: ")
 
@@ -50,12 +49,12 @@ def main():
             time = input("Enter the video time: ")
             add_video(name, time)
         elif choice == '3':
-            video_id = input("Enter the video ID to update: ")
+            video_id = input("Enter the video id to update: ")
             name = input("Enter the updated video name: ")
             time = input("Enter the updated video time: ")
             update_video(video_id, name, time)
         elif choice == '4':
-            video_id = input("Enter the video ID to delete: ")
+            video_id = input("Enter the video id to delete: ")
             delete_video(video_id)
         elif choice == '5':
             break
